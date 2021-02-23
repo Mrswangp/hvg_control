@@ -1,0 +1,93 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="src">
+      <UniqueIdentifier>{ac0b278c-0a4f-4176-9bbc-05b5eb7385cd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\ThirdParty">
+      <UniqueIdentifier>{7294284b-0f88-4d1e-9971-43edf807838a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\window">
+      <UniqueIdentifier>{971aebca-80b2-40bf-9777-fa0979ec428d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\ThirdParty\imgui">
+      <UniqueIdentifier>{a771c0a8-c6e9-45fd-a154-a046b39574fe}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\ThirdParty\spdlog">
+      <UniqueIdentifier>{ae583f91-f319-4024-a250-57c0fdb2442a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\mod">
+      <UniqueIdentifier>{84bc9523-bc98-4080-a95e-74d0e3d05fbf}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\mod\hvg">
+      <UniqueIdentifier>{cca3cb9d-98a4-46c4-aa19-418ae37db6d6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\ThirdParty\rs232">
+      <UniqueIdentifier>{fc1abfab-c4ca-472c-9ede-c72c87694038}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\log">
+      <UniqueIdentifier>{daa1c180-beb2-4890-a6c4-2a724e4fefea}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="control_hvg.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ThirdParty\rs232\rs232.c">
+      <Filter>src\ThirdParty\rs232</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ThirdParty\imgui\imgui.cpp">
+      <Filter>src\ThirdParty\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ThirdParty\imgui\imgui_demo.cpp">
+      <Filter>src\ThirdParty\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ThirdParty\imgui\imgui_draw.cpp">
+      <Filter>src\ThirdParty\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ThirdParty\imgui\imgui_widgets.cpp">
+      <Filter>src\ThirdParty\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ThirdParty\imgui\backends\imgui_impl_opengl3.cpp">
+      <Filter>src\ThirdParty\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ThirdParty\imgui\backends\imgui_impl_glfw.cpp">
+      <Filter>src\ThirdParty\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ThirdParty\imgui\examples\libs\gl3w\GL\gl3w.c">
+      <Filter>src\ThirdParty\imgui</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\window\window.hxx">
+      <Filter>src\window</Filter>
+    </ClInclude>
+    <ClInclude Include="src\mod\hvg\hvg_serial.hxx">
+      <Filter>src\mod\hvg</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ThirdParty\spdlog\spdlog.h">
+      <Filter>src\ThirdParty\spdlog</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ThirdParty\rs232\rs232.h">
+      <Filter>src\ThirdParty\rs232</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ThirdParty\imgui\imgui.h">
+      <Filter>src\ThirdParty\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ThirdParty\imgui\backends\imgui_impl_opengl3.h">
+      <Filter>src\ThirdParty\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ThirdParty\imgui\backends\imgui_impl_glfw.h">
+      <Filter>src\ThirdParty\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ThirdParty\imgui\examples\libs\gl3w\GL\gl3w.h">
+      <Filter>src\ThirdParty\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ThirdParty\imgui\examples\libs\gl3w\GL\glcorearb.h">
+      <Filter>src\ThirdParty\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="src\log\imgui_log.hxx">
+      <Filter>src\log</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>
