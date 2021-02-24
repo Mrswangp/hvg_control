@@ -45,7 +45,7 @@ bool rs232_imgui_interface(ui::window_t*, mod::hvg::control::hvg_serial_t* hvg_p
 {
 	static char port_buff[20] = "2";
 	static char bdrate_buff[20] = "9600";
-	char command_buff[100] = {};
+	static char command_buff[100];
 	static int receive_flag;
 	ImGui::Begin("RS-232 Communication");
 	ImGui::Text("Please input Port");
@@ -72,7 +72,7 @@ bool rs232_imgui_interface(ui::window_t*, mod::hvg::control::hvg_serial_t* hvg_p
 	if (ImGui::Button("Send Command")) {
 		std::thread third(mod::hvg::control::send, hvg_ptr, command_buff, 100);
 		third.join();
-		//memset(command_buff, 0x00, 100);
+		memset(command_buff, 0x00, 100);
 	}
 	if (ImGui::Button("Receive Command")) {
 		std::thread fourth(recv_data, hvg_ptr, log_ptr);
@@ -122,5 +122,8 @@ int main()
 	free(hvg_ptr);
 	delete win_ptr;
 	delete log_ptr;
+	hvg_ptr = nullptr;
+	win_ptr = nullptr;
+	log_ptr = nullptr;
 	return 0;
 }

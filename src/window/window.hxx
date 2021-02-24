@@ -37,11 +37,11 @@ namespace ui {
 	static void glfw_error_callback(int error, const char* description);
 	bool init(window_t* win, int x, int y, int w, int h, array<float, 4> background_color, const char* title, std::function<bool(ui::window_t*, mod::hvg::control::hvg_serial_t*, ui::log::Display_Log*)> function_ptr);
 
-	void clean_up(window_t* win);
-	void new_frame(window_t* win);
+	inline void clean_up(window_t* win);
+	inline void new_frame(window_t* win);
 	void draw(window_t* win, mod::hvg::control::hvg_serial_t* hvg_ptr, ui::log::Display_Log* log_ptr);
 	void render(window_t* win);
-	bool is_close(window_t* win);
+	inline bool is_close(window_t* win);
 }
 
 #endif // _INCLUDE_WINDOW_H
@@ -63,7 +63,7 @@ namespace ui {
 		win->w = w;
 		win->h = h;
 		win->clear_color = ImVec4(background_color.at(0), background_color.at(1), background_color.at(2), background_color.at(3));
-		strcpy(win->title, title);
+		strcpy_s(win->title, 50, title);
 		if (!glfwInit()) {
 			return false;
 		}
@@ -121,7 +121,7 @@ namespace ui {
 		ImGui_ImplOpenGL3_Init(glsl_version);
 		return true;
 	}
-	void new_frame(window_t* win)
+	inline void new_frame(window_t* win)
 	{
 		glfwPollEvents();
 		ImGui_ImplOpenGL3_NewFrame();
@@ -157,14 +157,14 @@ namespace ui {
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 		glfwSwapBuffers(win->wnd);
 	}
-	bool is_close(window_t* win)
+	inline bool is_close(window_t* win)
 	{
 		if (glfwWindowShouldClose(win->wnd)) {
 			return true;
 		}
 		return false;
 	}
-	void clean_up(window_t* win)
+	inline void clean_up(window_t* win)
 	{
 		ImGui_ImplOpenGL3_Shutdown();
 		ImGui_ImplGlfw_Shutdown();

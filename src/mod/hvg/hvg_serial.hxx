@@ -26,10 +26,10 @@ namespace mod::hvg::control {
 		using process_data_f = std::function<void(char* p, int n)>;
 		process_data_f process_data;
 	};
-	bool init(hvg_serial_t* p, int port, int baud, const char* mode);
+	inline bool init(hvg_serial_t* p, const int port, const int baud, const char* mode);
 	void drop(hvg_serial_t* p);
-	bool open(hvg_serial_t* p);
-	bool close(hvg_serial_t* p);
+	inline bool open(hvg_serial_t* p);
+	inline bool close(hvg_serial_t* p);
 	int send(hvg_serial_t* p, char* buf, int len);
 	int recv(hvg_serial_t* p, char* buf, int len);
 	int get_line(hvg_serial_t* p, char* buf, int len, double timeout);
@@ -40,7 +40,7 @@ namespace mod::hvg::control {
 #ifndef _HVG_SERIAL_IMPLEMENTED_
 #define _HVG_SERIAL_IMPLEMENTED_
 namespace mod::hvg::control {
-	bool init(hvg_serial_t* p, int port, int baud, const char* mode)
+	inline bool init(hvg_serial_t* p, const int port, const int baud, const char* mode)
 	{
 		if (p == nullptr) {
 			return false;
@@ -48,14 +48,14 @@ namespace mod::hvg::control {
 		p->len = 0;
 		p->port = port;
 		p->baud = baud;
-		strncpy(p->mode, mode, 4);
+		strncpy_s(p->mode, 4, mode, 4);
 		return true;
 	}
 	void drop(hvg_serial_t* p)
 	{
 
 	}
-	bool open(hvg_serial_t* p)
+	inline bool open(hvg_serial_t* p)
 	{
 		if (p == nullptr) {
 			return false;
@@ -67,7 +67,7 @@ namespace mod::hvg::control {
 		spdlog::info("open the server comport:{:d}", p->port);
 		return true;
 	}
-	bool close(hvg_serial_t* p)
+	inline bool close(hvg_serial_t* p)
 	{
 		if (p == nullptr) {
 			return false;
@@ -86,8 +86,8 @@ namespace mod::hvg::control {
 			spdlog::info("No data need send!");
 			return 0;
 		}
-		strcat(buf, "\r\n");
-		int ret = RS232_SendBuf(p->port, (unsigned char*)buf, strlen(buf));
+		strcat_s(buf, len, "\r\n");
+		int ret = RS232_SendBuf(p->port, (unsigned char*)buf, len);
 		return ret;
 	}
 	static int feedback(char result)

@@ -108,6 +108,7 @@ namespace ui::log {
 		memset(add_log_buff, 0x00, 500);
 		sprintf(add_log_buff, "[%d-%d-%d %d:%d:%d:%03d] # RECV DATA:", t.tm_year + 1900, t.tm_mon + 1, t.tm_mday, t.tm_hour, t.tm_min, t.tm_sec, tb.millitm);
 		memcpy(add_log_buff + strlen(add_log_buff), ptr, n);
+		add_log_buff[strlen(add_log_buff)] = '\0';
 		log_ptr->AddLog("%s", add_log_buff);
 		return 0;
 	}
