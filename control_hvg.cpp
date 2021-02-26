@@ -43,9 +43,11 @@ void recv_data(mod::hvg::control::hvg_serial_t* hvg_ptr, ui::log::Display_Log* l
 }
 bool rs232_imgui_interface(ui::window_t*, mod::hvg::control::hvg_serial_t* hvg_ptr, ui::log::Display_Log* log_ptr)
 {
+	static int i = 0;
+	static char command_history_buff[100][100];
 	static char port_buff[20] = "2";
 	static char bdrate_buff[20] = "9600";
-	static char command_buff[100];
+	static char current_command_buff[100];
 	static int receive_flag;
 	ImGui::Begin("RS-232 Communication");
 	ImGui::Text("Please input Port");
@@ -56,9 +58,7 @@ bool rs232_imgui_interface(ui::window_t*, mod::hvg::control::hvg_serial_t* hvg_p
 		std::thread fifth(hvg_serial_init, hvg_ptr, port_buff, bdrate_buff);
 		fifth.detach();
 	}
-	//hvg_serial_init(hvg_ptr, port_buff, bdrate_buff);
-	ImGui::Text("Please input command");
-	ImGui::InputText("Command", command_buff, IM_ARRAYSIZE(command_buff));
+	ImGui::SameLine();
 	if (ImGui::Button("Open Port")) {
 		std::thread first(mod::hvg::control::open, hvg_ptr);
 		first.detach();
@@ -68,23 +68,78 @@ bool rs232_imgui_interface(ui::window_t*, mod::hvg::control::hvg_serial_t* hvg_p
 		std::thread second(mod::hvg::control::close, hvg_ptr);
 		second.detach();
 	}
-	ImGui::SameLine();
-	if (ImGui::Button("Send Command")) {
-		std::thread third(mod::hvg::control::send, hvg_ptr, command_buff, 100);
-		third.join();
-		memset(command_buff, 0x00, 100);
-	}
-	if (ImGui::Button("Receive Command")) {
-		std::thread fourth(recv_data, hvg_ptr, log_ptr);
-		fourth.detach();
-		receive_flag = 1;
-	}
-	ImGui::SameLine();
-	if (receive_flag == 1) {
-		ImGui::Text("Receive status is Yes");
-	}
-	else {
-		ImGui::Text("Receive status is No");
+	if (ImGui::TreeNode("Send && Receive"))
+	{
+		struct Funcs
+		{
+			static int MyCallback(ImGuiInputTextCallbackData* data)
+			{
+				static int i = 0;
+				static int j = 0;
+				if (data->EventFlag == ImGuiInputTextFlags_CallbackCompletion)
+				{
+					data->InsertChars(data->CursorPos, "..");
+				}
+				else if (data->EventFlag == ImGuiInputTextFlags_CallbackHistory)
+				{
+					if (data->EventKey == ImGuiKey_UpArrow)
+					{
+						data->DeleteChars(0, data->BufTextLen);
+						/*    if (strlen(command_array[++i]) == 0) {
+								data->InsertChars(0, command_array[--i]);
+							}
+							else {*/
+							//  j = i;
+						data->InsertChars(0, command_history_buff[i++]);
+						// }
+						data->SelectAll();
+					}
+					else if (data->EventKey == ImGuiKey_DownArrow)
+					{
+						data->DeleteChars(0, data->BufTextLen);
+						//   if (strlen(command_array[--i]) == 0) {
+						//       data->InsertChars(0, command_array[i]);
+						 //  }
+						 //  else if (strlen(command_array[--i]) != 0 && i >= 0) {
+						data->InsertChars(0, command_history_buff[i--]);
+						//  }
+						data->SelectAll();
+					}
+				}
+				else if (data->EventFlag == ImGuiInputTextFlags_CallbackEdit)
+				{
+					// Toggle casing of first character
+					char c = data->Buf[0];
+					if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')) data->Buf[0] ^= 32;
+					data->BufDirty = true;
+					// Increment a counter
+					int* p_int = (int*)data->UserData;
+					*p_int = *p_int + 1;
+				}
+				return 0;
+			}
+		};
+		ImGui::Text("Please input command");
+		ImGui::InputText("Command", current_command_buff, IM_ARRAYSIZE(current_command_buff), ImGuiInputTextFlags_CallbackHistory, Funcs::MyCallback);
+		if (ImGui::Button("Send Command")) {
+			std::thread third(mod::hvg::control::send, hvg_ptr, current_command_buff, 100);
+			third.join();
+			strcpy_s(command_history_buff[i++], 100, current_command_buff);
+			memset(current_command_buff, 0x00, 100);
+		}
+		if (ImGui::Button("Receive Command")) {
+			std::thread fourth(recv_data, hvg_ptr, log_ptr);
+			fourth.detach();
+			receive_flag = 1;
+		}
+		ImGui::SameLine();
+		if (receive_flag == 1) {
+			ImGui::Text("Receive status is Yes");
+		}
+		else {
+			ImGui::Text("Receive status is No");
+		}
+		ImGui::TreePop();
 	}
 	log_ptr->Draw("Receive data log");
 	ImGui::End();
