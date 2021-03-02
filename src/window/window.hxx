@@ -27,25 +27,27 @@
 namespace ui {
 	using namespace std;
 	struct window_t {
-		using render_fun = std::function<bool(ui::window_t*, mod::hvg::control::hvg_serial_t*, ui::log::Display_Log*)>;
+		using render_fun = std::function<bool(ui::window_t*, mod::hvg::control::hvg_serial_t*, ui::log::display_log_t*)>;
 		GLFWwindow* wnd;
 		int x, y, w, h;
+		int port, bdrate, kv;
+		float mAs;
 		ImVec4 clear_color;
 		char title[50];
 		list<render_fun> renders;
 	};
 	static void glfw_error_callback(int error, const char* description);
-	bool init(window_t* win, int x, int y, int w, int h, array<float, 4> background_color, const char* title, std::function<bool(ui::window_t*, mod::hvg::control::hvg_serial_t*, ui::log::Display_Log*)> function_ptr);
-
-	inline void clean_up(window_t* win);
-	inline void new_frame(window_t* win);
-	void draw(window_t* win, mod::hvg::control::hvg_serial_t* hvg_ptr, ui::log::Display_Log* log_ptr);
+	bool init(window_t* win, int x, int y, int w, int h, array<float, 4> background_color, const char* title, std::function<bool(ui::window_t*, mod::hvg::control::hvg_serial_t*, ui::log::display_log_t*)> function_ptr);
+	void update(window_t* win, mod::hvg::control::hvg_serial_t* hvg_ptr);
+	void clean_up(window_t* win);
+	void drop(window_t* win);
+	void new_frame(window_t* win);
+	void draw(window_t* win, mod::hvg::control::hvg_serial_t* hvg_ptr, ui::log::display_log_t* log_ptr);
 	void render(window_t* win);
-	inline bool is_close(window_t* win);
+	bool is_close(window_t* win);
 }
 
 #endif // _INCLUDE_WINDOW_H
-
 #ifdef WINDOW_IMPLEMENTATION
 #ifndef WINDOW_IMPLEMENTED
 #define WINDOW_IMPLEMENTED
@@ -55,9 +57,14 @@ namespace ui {
 		fprintf(stderr, "Glfw Error %d: %s\n", error, description);
 	}
 
-	bool init(window_t* win, int x, int y, int w, int h, array<float, 4> background_color, const char* title, std::function<bool(ui::window_t*, mod::hvg::control::hvg_serial_t*, ui::log::Display_Log*)> function_ptr)
+	bool init(window_t* win, int x, int y, int w, int h, array<float, 4> background_color, const char* title, std::function<bool(ui::window_t*, mod::hvg::control::hvg_serial_t*, ui::log::display_log_t*)> function_ptr)
 	{
 		glfwSetErrorCallback(glfw_error_callback);
+		if (win == nullptr) {
+			return false;
+		}
+		new(&win->renders)list<window_t::render_fun>;
+		//win->renders.push_back(function_ptr);
 		win->renders.push_back(function_ptr);
 		/*	function_ptr = nullptr;*/
 		win->w = w;
@@ -121,16 +128,16 @@ namespace ui {
 		ImGui_ImplOpenGL3_Init(glsl_version);
 		return true;
 	}
-	inline void new_frame(window_t* win)
+	void new_frame(window_t* win)
 	{
 		glfwPollEvents();
 		ImGui_ImplOpenGL3_NewFrame();
 		ImGui_ImplGlfw_NewFrame();
 		ImGui::NewFrame();
 	}
-	void draw(window_t* win, mod::hvg::control::hvg_serial_t* hvg_ptr, ui::log::Display_Log* log_ptr)
+	void draw(window_t* win, mod::hvg::control::hvg_serial_t* hvg_ptr, ui::log::display_log_t* log_ptr)
 	{
-		std::function<bool(ui::window_t*, mod::hvg::control::hvg_serial_t*, ui::log::Display_Log*)>& fun_ptr = win->renders.front();
+		std::function<bool(ui::window_t*, mod::hvg::control::hvg_serial_t*, ui::log::display_log_t*)>& fun_ptr = win->renders.front();
 		fun_ptr(win, hvg_ptr, log_ptr);
 		//std::list<std::function<bool(ui::window_t*)>>::iterator it;
 		//for (it = win->renders.begin(); it != win->renders.end(); it++); {
@@ -142,10 +149,6 @@ namespace ui {
 
 		//}
 	}
-	//void draw(window_t* win)
-	//{
-
-	//}
 	void render(window_t* win)
 	{
 		ImGui::Render();
@@ -157,20 +160,37 @@ namespace ui {
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 		glfwSwapBuffers(win->wnd);
 	}
-	inline bool is_close(window_t* win)
+	bool is_close(window_t* win)
 	{
 		if (glfwWindowShouldClose(win->wnd)) {
 			return true;
 		}
 		return false;
 	}
-	inline void clean_up(window_t* win)
+	void clean_up(window_t* win)
 	{
+
 		ImGui_ImplOpenGL3_Shutdown();
 		ImGui_ImplGlfw_Shutdown();
 		ImGui::DestroyContext();
 		glfwDestroyWindow(win->wnd);
 		glfwTerminate();
+	}
+	void drop(window_t* win)
+	{
+		if (win) {
+			win->h = 0;
+			win->w = 0;
+			win->x = 0;
+			win->y = 0;
+		}
+	}
+	void update(window_t* win, mod::hvg::control::hvg_serial_t* hvg_ptr)
+	{
+		win->port = hvg_ptr->port;
+		win->bdrate = hvg_ptr->baud;
+		win->kv = hvg_ptr->kv;
+		win->mAs = hvg_ptr->mAs;
 	}
 
 }

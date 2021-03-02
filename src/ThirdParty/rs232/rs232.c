@@ -468,35 +468,35 @@ int RS232_OpenComport(int comport_number, int baudrate, const char* mode)
 
 	switch (baudrate)
 	{
-	case     110: strcpy_s(mode_str, 128, "baud=110");
+	case     110: strcpy(mode_str, "baud=110");
 		break;
-	case     300: strcpy_s(mode_str, 128, "baud=300");
+	case     300: strcpy(mode_str, "baud=300");
 		break;
-	case     600: strcpy_s(mode_str, 128, "baud=600");
+	case     600: strcpy(mode_str, "baud=600");
 		break;
-	case    1200: strcpy_s(mode_str, 128, "baud=1200");
+	case    1200: strcpy(mode_str, "baud=1200");
 		break;
-	case    2400: strcpy_s(mode_str, 128, "baud=2400");
+	case    2400: strcpy(mode_str, "baud=2400");
 		break;
-	case    4800: strcpy_s(mode_str, 128, "baud=4800");
+	case    4800: strcpy(mode_str, "baud=4800");
 		break;
-	case    9600: strcpy_s(mode_str, 128, "baud=9600");
+	case    9600: strcpy(mode_str, "baud=9600");
 		break;
-	case   19200: strcpy_s(mode_str, 128, "baud=19200");
+	case   19200: strcpy(mode_str, "baud=19200");
 		break;
-	case   38400: strcpy_s(mode_str, 128, "baud=38400");
+	case   38400: strcpy(mode_str, "baud=38400");
 		break;
-	case   57600: strcpy_s(mode_str, 128, "baud=57600");
+	case   57600: strcpy(mode_str, "baud=57600");
 		break;
-	case  115200: strcpy_s(mode_str, 128, "baud=115200");
+	case  115200: strcpy(mode_str, "baud=115200");
 		break;
-	case  128000: strcpy_s(mode_str, 128, "baud=128000");
+	case  128000: strcpy(mode_str, "baud=128000");
 		break;
-	case  256000: strcpy_s(mode_str, 128, "baud=256000");
+	case  256000: strcpy(mode_str, "baud=256000");
 		break;
-	case  500000: strcpy_s(mode_str, 128, "baud=500000");
+	case  500000: strcpy(mode_str, "baud=500000");
 		break;
-	case 1000000: strcpy_s(mode_str, 128, "baud=1000000");
+	case 1000000: strcpy(mode_str, "baud=1000000");
 		break;
 	default: printf("invalid baudrate\n");
 		return(1);
@@ -511,13 +511,13 @@ int RS232_OpenComport(int comport_number, int baudrate, const char* mode)
 
 	switch (mode[0])
 	{
-	case '8': strcat_s(mode_str, 128, " data=8");
+	case '8': strcat(mode_str, " data=8");
 		break;
-	case '7': strcat_s(mode_str, 128, " data=7");
+	case '7': strcat(mode_str, " data=7");
 		break;
-	case '6': strcat_s(mode_str, 128, " data=6");
+	case '6': strcat(mode_str, " data=6");
 		break;
-	case '5': strcat_s(mode_str, 128, " data=5");
+	case '5': strcat(mode_str, " data=5");
 		break;
 	default: printf("invalid number of data-bits '%c'\n", mode[0]);
 		return(1);
@@ -527,13 +527,13 @@ int RS232_OpenComport(int comport_number, int baudrate, const char* mode)
 	switch (mode[1])
 	{
 	case 'N':
-	case 'n': strcat_s(mode_str, 128, " parity=n");
+	case 'n': strcat(mode_str, " parity=n");
 		break;
 	case 'E':
-	case 'e': strcat_s(mode_str, 128, " parity=e");
+	case 'e': strcat(mode_str, " parity=e");
 		break;
 	case 'O':
-	case 'o': strcat_s(mode_str, 128, " parity=o");
+	case 'o': strcat(mode_str, " parity=o");
 		break;
 	default: printf("invalid parity '%c'\n", mode[1]);
 		return(1);
@@ -542,16 +542,16 @@ int RS232_OpenComport(int comport_number, int baudrate, const char* mode)
 
 	switch (mode[2])
 	{
-	case '1': strcat_s(mode_str, 128, " stop=1");
+	case '1': strcat(mode_str, " stop=1");
 		break;
-	case '2': strcat_s(mode_str, 128, " stop=2");
+	case '2': strcat(mode_str, " stop=2");
 		break;
 	default: printf("invalid number of stop bits '%c'\n", mode[2]);
 		return(1);
 		break;
 	}
 
-	strcat_s(mode_str, 128, " dtr=on rts=on");
+	strcat(mode_str, " dtr=on rts=on");
 
 	/*
 	http://msdn.microsoft.com/en-us/library/windows/desktop/aa363145%28v=vs.85%29.aspx

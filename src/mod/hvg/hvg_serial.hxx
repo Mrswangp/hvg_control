@@ -1,8 +1,5 @@
 ﻿#ifndef _HVG_SERIAL_H_
 #define _HVG_SERIAL_H_
-#include <future>
-#include <functional>
-#include <iostream>
 #include "rs232.h"
 #include"spdlog/spdlog.h"
 namespace mod::hvg::control {
@@ -10,6 +7,8 @@ namespace mod::hvg::control {
 	struct hvg_serial_t {
 		int port;
 		int baud;
+		int kv;
+		float mAs;
 		char mode[4];
 		int pos;
 		int len;
@@ -26,10 +25,10 @@ namespace mod::hvg::control {
 		using process_data_f = std::function<void(char* p, int n)>;
 		process_data_f process_data;
 	};
-	inline bool init(hvg_serial_t* p, const int port, const int baud, const char* mode);
-	void drop(hvg_serial_t* p);
-	inline bool open(hvg_serial_t* p);
-	inline bool close(hvg_serial_t* p);
+	bool init(hvg_serial_t* p, const int port, const int baud, const char* mode);
+	void clean_up(hvg_serial_t* p);
+	bool open(hvg_serial_t* p);
+	bool close(hvg_serial_t* p);
 	int send(hvg_serial_t* p, char* buf, int len);
 	int recv(hvg_serial_t* p, char* buf, int len);
 	int get_line(hvg_serial_t* p, char* buf, int len, double timeout);
@@ -40,7 +39,7 @@ namespace mod::hvg::control {
 #ifndef _HVG_SERIAL_IMPLEMENTED_
 #define _HVG_SERIAL_IMPLEMENTED_
 namespace mod::hvg::control {
-	inline bool init(hvg_serial_t* p, const int port, const int baud, const char* mode)
+	bool init(hvg_serial_t* p, const int port, const int baud, const char* mode)
 	{
 		if (p == nullptr) {
 			return false;
@@ -51,11 +50,11 @@ namespace mod::hvg::control {
 		strncpy_s(p->mode, 4, mode, 4);
 		return true;
 	}
-	void drop(hvg_serial_t* p)
+	void clean_up(hvg_serial_t* p)
 	{
 
 	}
-	inline bool open(hvg_serial_t* p)
+	bool open(hvg_serial_t* p)
 	{
 		if (p == nullptr) {
 			return false;
@@ -67,7 +66,7 @@ namespace mod::hvg::control {
 		spdlog::info("open the server comport:{:d}", p->port);
 		return true;
 	}
-	inline bool close(hvg_serial_t* p)
+	bool close(hvg_serial_t* p)
 	{
 		if (p == nullptr) {
 			return false;
@@ -141,17 +140,12 @@ namespace mod::hvg::control {
 		p->buf[p->len] = '\0';
 		//spdlog::debug("receive_buf:{:s}", p->buf);
 		n = scan_data(p->buf, p->len, buf);
-		//spdlog::debug("p->len:{:d}", p->len);
 		if (n > 0) {
 			p->len = p->len - n;
 			return n;
 		}
 		return 0;
 	}
-	//static bool is_stop(char* p, char* stop_chars)
-	//{
-	//
-	//}
 	int get_line(hvg_serial_t* p, char* buf, int len)
 	{
 		if (p == nullptr) {
@@ -163,10 +157,10 @@ namespace mod::hvg::control {
 			int n = RS232_PollComport(p->port, (unsigned char*)ptr + p->len, BUF_SIZE - p->len);
 			p->len = p->len + n;
 			p->buf[p->len] = '\0';
-			n = scan_data(p->buf, p->len, buf);
-			if (n > 0) {
-				p->len = p->len - n;
-				return n;
+			int i = scan_data(p->buf, p->len, buf);
+			if (i > 0) {
+				p->len = p->len - i;
+				return i;
 			}
 		}
 		return 0;
@@ -188,13 +182,11 @@ namespace mod::hvg::control {
 			//spdlog::debug("run_time:{:f}", run_time);
 			int n = RS232_PollComport(p->port, (unsigned char*)ptr + p->len, BUF_SIZE - p->len);
 			p->len = p->len + n;
-			//p->buf[p->len] = '\0';
-			//spdlog::debug("receive_buf:{:s}", p->buf);
-			n = scan_data(p->buf, p->len, buf);
-			//spdlog::debug("p->len:{:d}", p->len);
-			if (n > 0) {
-				p->len = p->len - n;
-				return n;
+			p->buf[p->len] = '\0';
+			int i = scan_data(p->buf, p->len, buf);
+			if (i > 0) {
+				p->len = p->len - i;
+				return i;
 			}
 		}
 		return 0;

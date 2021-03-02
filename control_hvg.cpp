@@ -1,4 +1,5 @@
 ﻿#include <iostream>
+#include <atomic>
 #include <thread>
 #define WINDOW_IMPLEMENTATION
 #define LOG_IMPLEMENTATION
@@ -7,10 +8,10 @@
 #include "hvg_serial.hxx"
 #include "window.hxx"
 #include "spdlog/spdlog.h"
-bool hvg_serial_init(mod::hvg::control::hvg_serial_t* ptr, char port_buff[], char bdrate_buff[])
+std::atomic<bool> breakflag(false);
+std::atomic<bool> completeflag(false);
+bool hvg_serial_init(mod::hvg::control::hvg_serial_t* ptr, const int port, const int bdrate)
 {
-	int port = atoi(port_buff);
-	int bdrate = atoi(bdrate_buff);
 	char mode[] = { '8','N','2',0 };
 	bool ret = mod::hvg::control::init(ptr, port, bdrate, mode);
 	if (ret == false) {
@@ -20,16 +21,16 @@ bool hvg_serial_init(mod::hvg::control::hvg_serial_t* ptr, char port_buff[], cha
 	spdlog::debug("init successfully!\n");
 	return true;
 }
-void recv_data(mod::hvg::control::hvg_serial_t* hvg_ptr, ui::log::Display_Log* log_ptr)
+void recv_data(mod::hvg::control::hvg_serial_t* hvg_ptr, ui::log::display_log_t* log_ptr)
 {
-	double timeout = 1000;
-	while (1)
+	static double timeout = 1000;
+	while (!breakflag.load())
 	{
 		char recv_buff[1024] = {};
 		//mod::hvg::control::get_line(hvg_ptr, recv_buff, 1024);
-		printf("before complete command is %s\n", recv_buff);
-		int n = mod::hvg::control::get_line(hvg_ptr, recv_buff, 1024);
-		printf("after complete command is %s\n", recv_buff);
+		printf("before complete command is %s,and length is %d\n", recv_buff, strlen(recv_buff));
+		int n = mod::hvg::control::get_line(hvg_ptr, recv_buff, 1024, timeout);
+		printf("after complete command is %s,and length is %d\n", recv_buff, strlen(recv_buff));
 		if (strlen(recv_buff) != 0) {
 			add_log(log_ptr, recv_buff, n);
 		}
@@ -39,34 +40,51 @@ void recv_data(mod::hvg::control::hvg_serial_t* hvg_ptr, ui::log::Display_Log* l
 		}*/
 		spdlog::debug("p->buf is :{:s}", hvg_ptr->buf);
 	}
+	completeflag.store(true);
 	printf("break while\n");
 }
-bool rs232_imgui_interface(ui::window_t*, mod::hvg::control::hvg_serial_t* hvg_ptr, ui::log::Display_Log* log_ptr)
+bool rs232_imgui_interface(ui::window_t*, mod::hvg::control::hvg_serial_t* hvg_ptr, ui::log::display_log_t* log_ptr)
 {
 	static int i = 0;
 	static char command_history_buff[100][100];
-	static char port_buff[20] = "2";
-	static char bdrate_buff[20] = "9600";
 	static char current_command_buff[100];
 	static int receive_flag;
+	/*static char port_buff[20] = "2";
+	 static char bdrate_buff[20] = "9600";*/
+	 //static char kv_buff[20];
+	 //static char mAs_buff[20];
+	static int kv;
+	static int port;
+	static int bdrate;
+	static float mAs;
 	ImGui::Begin("RS-232 Communication");
+	//ImGui::TextColored(ImVec4(1.0f, 0.2f, 0.5f, 0.7f), "Please input Port");
 	ImGui::Text("Please input Port");
-	ImGui::InputText("Port", port_buff, IM_ARRAYSIZE(port_buff));
+	ImGui::InputInt("Port", &port);
+	//ImGui::InputText("Port", port_buff, IM_ARRAYSIZE(port_buff));
 	ImGui::Text("Please input Bdrate");
-	ImGui::InputText("Bdrate", bdrate_buff, IM_ARRAYSIZE(bdrate_buff));
+	//ImGui::TextColored(ImVec4(1.0f, 0.2f, 0.5f, 0.7f), "Please input Bdrate");
+	ImGui::InputInt("Bdrate", &bdrate);
+	//ImGui::InputText("Bdrate", bdrate_buff, IM_ARRAYSIZE(bdrate_buff));
+	//ImGui::TextColored(ImVec4(1.0f, 0.2f, 0.5f, 0.7f), "Please input KV");
+	ImGui::Text("Please input KV");
+	ImGui::InputInt("KV", &kv);
+	ImGui::Text("Please input mAs");
+	//ImGui::TextColored(ImVec4(1.0f, 0.2f, 0.5f, 0.7f), "Please input mAs");
+	ImGui::InputFloat("mAs", &mAs);
 	if (ImGui::Button("init")) {
-		std::thread fifth(hvg_serial_init, hvg_ptr, port_buff, bdrate_buff);
-		fifth.detach();
+		std::thread init(hvg_serial_init, hvg_ptr, port, bdrate);
+		init.detach();
 	}
 	ImGui::SameLine();
 	if (ImGui::Button("Open Port")) {
-		std::thread first(mod::hvg::control::open, hvg_ptr);
-		first.detach();
+		std::thread open(mod::hvg::control::open, hvg_ptr);
+		open.detach();
 	}
 	ImGui::SameLine();
 	if (ImGui::Button("Close Port")) {
-		std::thread second(mod::hvg::control::close, hvg_ptr);
-		second.detach();
+		std::thread close(mod::hvg::control::close, hvg_ptr);
+		close.detach();
 	}
 	if (ImGui::TreeNode("Send && Receive"))
 	{
@@ -105,6 +123,16 @@ bool rs232_imgui_interface(ui::window_t*, mod::hvg::control::hvg_serial_t* hvg_p
 						//  }
 						data->SelectAll();
 					}
+					/*		else if (data->EventKey == ImGuiKey_LeftArrow) {
+								data->DeleteChars(0, data->BufTextLen);
+								data->InsertChars(0, command_history_buff[0]);
+								data->SelectAll();
+							}
+							else if (data->EventKey == ImGuiKey_RightArrow) {
+								data->DeleteChars(0, data->BufTextLen);
+								data->InsertChars(0, command_history_buff[0]);
+								data->SelectAll();
+							}*/
 				}
 				else if (data->EventFlag == ImGuiInputTextFlags_CallbackEdit)
 				{
@@ -119,17 +147,19 @@ bool rs232_imgui_interface(ui::window_t*, mod::hvg::control::hvg_serial_t* hvg_p
 				return 0;
 			}
 		};
+		//ImGui::Text("Please input command");//default color
+		//ImGui::TextColored(ImVec4(1.0f, 0.2f, 0.5f, 0.7f), "Please input command");//custom color
 		ImGui::Text("Please input command");
 		ImGui::InputText("Command", current_command_buff, IM_ARRAYSIZE(current_command_buff), ImGuiInputTextFlags_CallbackHistory, Funcs::MyCallback);
 		if (ImGui::Button("Send Command")) {
-			std::thread third(mod::hvg::control::send, hvg_ptr, current_command_buff, 100);
-			third.join();
-			strcpy_s(command_history_buff[i++], 100, current_command_buff);
+			std::thread send(mod::hvg::control::send, hvg_ptr, current_command_buff, 100);
+			send.join();
+			strcpy(command_history_buff[i++], current_command_buff);
 			memset(current_command_buff, 0x00, 100);
 		}
 		if (ImGui::Button("Receive Command")) {
-			std::thread fourth(recv_data, hvg_ptr, log_ptr);
-			fourth.detach();
+			std::thread receive(recv_data, hvg_ptr, log_ptr);
+			receive.detach();
 			receive_flag = 1;
 		}
 		ImGui::SameLine();
@@ -141,12 +171,13 @@ bool rs232_imgui_interface(ui::window_t*, mod::hvg::control::hvg_serial_t* hvg_p
 		}
 		ImGui::TreePop();
 	}
-	log_ptr->Draw("Receive data log");
+	Draw(log_ptr, "Receive data log");
 	ImGui::End();
 	return true;
 }
-int imgui_init(ui::window_t* win_ptr)
+ui::window_t* imgui_init()
 {
+	ui::window_t* win_ptr = (ui::window_t*)malloc(sizeof(ui::window_t));
 	std::array<float, 4> background_color = { 0.45f, 0.55f, 0.60f, 0.95f };
 	int x = 0;
 	int y = 0;
@@ -156,27 +187,35 @@ int imgui_init(ui::window_t* win_ptr)
 	bool ret = ui::init(win_ptr, x, y, w, h, background_color, title, rs232_imgui_interface);
 	if (ret == false) {
 		spdlog::error("init failed");
-		return -1;
+		return nullptr;
 	}
 	spdlog::debug("init successfully");
-	return 0;
+	return win_ptr;
 }
 int main()
 {
 	//spdlog::set_level(spdlog::level::debug);
 	mod::hvg::control::hvg_serial_t* hvg_ptr = (mod::hvg::control::hvg_serial_t*)malloc(sizeof(mod::hvg::control::hvg_serial_t));
-	ui::window_t* win_ptr = new ui::window_t;
-	ui::log::Display_Log* log_ptr = new ui::log::Display_Log;
-	imgui_init(win_ptr);
+	ui::log::display_log_t* log_ptr = new ui::log::display_log_t;
+	ui::window_t* win_ptr = imgui_init();
+	if (win_ptr == nullptr) {
+		spdlog::debug("imgui init failed!");
+		return -1;
+	}
 	while (!is_close(win_ptr)) {
 		new_frame(win_ptr);
 		draw(win_ptr, hvg_ptr, log_ptr);
 		render(win_ptr);
 	}
+	breakflag.store(true);
 	clean_up(win_ptr);
+	drop(win_ptr);
+	while (!completeflag.load()) {
+
+	}
 	free(hvg_ptr);
-	delete win_ptr;
 	delete log_ptr;
+	delete win_ptr;
 	hvg_ptr = nullptr;
 	win_ptr = nullptr;
 	log_ptr = nullptr;
