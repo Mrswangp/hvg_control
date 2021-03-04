@@ -47,7 +47,7 @@ namespace mod::hvg::control {
 		p->len = 0;
 		p->port = port;
 		p->baud = baud;
-		strncpy_s(p->mode, 4, mode, 4);
+		strncpy(p->mode, mode, 4);
 		return true;
 	}
 	void clean_up(hvg_serial_t* p)
@@ -85,8 +85,12 @@ namespace mod::hvg::control {
 			spdlog::info("No data need send!");
 			return 0;
 		}
-		strcat_s(buf, len, "\r\n");
+		if (buf[len - 1] != '\n' && buf[len - 2] != '\r') {
+			strcat(buf,"\r\n");
+			len = len + 2;
+		}
 		int ret = RS232_SendBuf(p->port, (unsigned char*)buf, len);
+		printf("send_buff is %s,send_byte is %d\n", buf,ret);
 		return ret;
 	}
 	static int feedback(char result)

@@ -14,6 +14,7 @@ bool hvg_serial_init(mod::hvg::control::hvg_serial_t* ptr, const int port, const
 {
 	char mode[] = { '8','N','2',0 };
 	bool ret = mod::hvg::control::init(ptr, port, bdrate, mode);
+	printf("portis %d bdrate is %d\n", port, bdrate);
 	if (ret == false) {
 		spdlog::error("init failed!\n");
 		return false;
@@ -25,10 +26,12 @@ void recv_data(mod::hvg::control::hvg_serial_t* hvg_ptr, ui::log::display_log_t*
 {
 	static double timeout = 1000;
 	while (!breakflag.load())
+		//while (1)
 	{
 		char recv_buff[1024] = {};
 		//mod::hvg::control::get_line(hvg_ptr, recv_buff, 1024);
 		printf("before complete command is %s,and length is %d\n", recv_buff, strlen(recv_buff));
+		//int n = mod::hvg::control::get_line(hvg_ptr, recv_buff, 1024);
 		int n = mod::hvg::control::get_line(hvg_ptr, recv_buff, 1024, timeout);
 		printf("after complete command is %s,and length is %d\n", recv_buff, strlen(recv_buff));
 		if (strlen(recv_buff) != 0) {
@@ -43,6 +46,44 @@ void recv_data(mod::hvg::control::hvg_serial_t* hvg_ptr, ui::log::display_log_t*
 	completeflag.store(true);
 	printf("break while\n");
 }
+bool HANDSHAKE(mod::hvg::control::hvg_serial_t* hvg_ptr)
+{
+	static char handshake_buff[50] = "<IFV\r\n";
+	static char compare_handshake_buff[50] = ">IFV 1\r\n";
+	int ret = RS232_SendBuf(hvg_ptr->port, (unsigned char*)handshake_buff, strlen(handshake_buff));
+	printf("send_buff is %s,send_byte is %d\n", handshake_buff, ret);
+	static double timeout = 1000;
+	//while (!breakflag.load())
+	while (1)
+	{
+		char recv_buff[1024] = {};
+		//mod::hvg::control::get_line(hvg_ptr, recv_buff, 1024);
+		printf("before complete command is %s,and length is %d\n", recv_buff, strlen(recv_buff));
+		//int n = mod::hvg::control::get_line(hvg_ptr, recv_buff, 1024);
+		int n = mod::hvg::control::get_line(hvg_ptr, recv_buff, 1024, timeout);
+		if (n > 0) {
+			printf("recv_buff is %s,compare_handshake_buff is %s\n", recv_buff, compare_handshake_buff);
+			if (strcmp(recv_buff, compare_handshake_buff) == 0) {
+				printf("true\n");
+				return true;
+			}
+			else {
+				printf("false\n");
+				return false;
+			}
+		}
+		printf("after complete command is %s,and length is %d\n", recv_buff, strlen(recv_buff));
+		/*	if (strlen(recv_buff) != 0) {
+				add_log(log_ptr, recv_buff, n);
+			}*/
+			//	printf("recv_buff length is ->%d\n", strlen(recv_buff));
+			/*if (strlen(recv_buff) == 0) {
+				break;
+			}*/
+		spdlog::debug("p->buf is :{:s}", hvg_ptr->buf);
+	}
+
+}
 bool rs232_imgui_interface(ui::window_t*, mod::hvg::control::hvg_serial_t* hvg_ptr, ui::log::display_log_t* log_ptr)
 {
 	static int i = 0;
@@ -54,8 +95,8 @@ bool rs232_imgui_interface(ui::window_t*, mod::hvg::control::hvg_serial_t* hvg_p
 	 //static char kv_buff[20];
 	 //static char mAs_buff[20];
 	static int kv;
-	static int port;
-	static int bdrate;
+	static int port = 2;
+	static int bdrate = 19200;
 	static float mAs;
 	ImGui::Begin("RS-232 Communication");
 	//ImGui::TextColored(ImVec4(1.0f, 0.2f, 0.5f, 0.7f), "Please input Port");
@@ -85,6 +126,10 @@ bool rs232_imgui_interface(ui::window_t*, mod::hvg::control::hvg_serial_t* hvg_p
 	if (ImGui::Button("Close Port")) {
 		std::thread close(mod::hvg::control::close, hvg_ptr);
 		close.detach();
+	}
+	if (ImGui::Button("Handshake")) {
+		std::thread HandShake(HANDSHAKE, hvg_ptr);
+		HandShake.detach();
 	}
 	if (ImGui::TreeNode("Send && Receive"))
 	{
@@ -152,7 +197,8 @@ bool rs232_imgui_interface(ui::window_t*, mod::hvg::control::hvg_serial_t* hvg_p
 		ImGui::Text("Please input command");
 		ImGui::InputText("Command", current_command_buff, IM_ARRAYSIZE(current_command_buff), ImGuiInputTextFlags_CallbackHistory, Funcs::MyCallback);
 		if (ImGui::Button("Send Command")) {
-			std::thread send(mod::hvg::control::send, hvg_ptr, current_command_buff, 100);
+			std::thread send(mod::hvg::control::send, hvg_ptr, current_command_buff, strlen(current_command_buff));
+			//std::thread send(mod::hvg::control::send, hvg_ptr, current_command_buff, 100);
 			send.join();
 			strcpy(command_history_buff[i++], current_command_buff);
 			memset(current_command_buff, 0x00, 100);
