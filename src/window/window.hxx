@@ -63,7 +63,7 @@ namespace ui {
 		if (win == nullptr) {
 			return false;
 		}
-		new(&win->renders)list<window_t::render_fun>;
+		new(&win->renders)list<window_t::render_fun>;//construction list
 		//win->renders.push_back(function_ptr);
 		win->renders.push_back(function_ptr);
 		/*	function_ptr = nullptr;*/

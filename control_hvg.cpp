@@ -46,10 +46,36 @@ void recv_data(mod::hvg::control::hvg_serial_t* hvg_ptr, ui::log::display_log_t*
 	completeflag.store(true);
 	printf("break while\n");
 }
+bool ERRORHANDLE(mod::hvg::control::hvg_serial_t* hvg_ptr, const int errorflag)
+{
+	static char handshake_buff[50] = "<IFV\r\n";
+	int ret;
+	printf("enter into errorhandle function!\n");
+	switch (errorflag) {
+	case 1:
+		ret = RS232_SendBuf(hvg_ptr->port, (unsigned char*)handshake_buff, strlen(handshake_buff));
+		printf("send_buff is %s,send_byte is %d\n", handshake_buff, ret);
+		break;
+	case 2:
+		break;
+	case 3:
+		break;
+	case 4:
+		break;
+	case 5:
+		break;
+	default:
+		printf("unkown error!\n");
+		return false;
+	}
+	return true;
+}
 bool HANDSHAKE(mod::hvg::control::hvg_serial_t* hvg_ptr)
 {
 	static char handshake_buff[50] = "<IFV\r\n";
-	static char compare_handshake_buff[50] = ">IFV 1\r\n";
+	static char compare_command_version1[50] = ">IFV 1\r\n";
+	static char compare_command_version2[50] = ">IFV 2\r\n";
+	static char compare_handshake_unkown[50] = ">UNK\r\n";
 	int ret = RS232_SendBuf(hvg_ptr->port, (unsigned char*)handshake_buff, strlen(handshake_buff));
 	printf("send_buff is %s,send_byte is %d\n", handshake_buff, ret);
 	static double timeout = 1000;
@@ -62,13 +88,14 @@ bool HANDSHAKE(mod::hvg::control::hvg_serial_t* hvg_ptr)
 		//int n = mod::hvg::control::get_line(hvg_ptr, recv_buff, 1024);
 		int n = mod::hvg::control::get_line(hvg_ptr, recv_buff, 1024, timeout);
 		if (n > 0) {
-			printf("recv_buff is %s,compare_handshake_buff is %s\n", recv_buff, compare_handshake_buff);
-			if (strcmp(recv_buff, compare_handshake_buff) == 0) {
+			printf("recv_buff is %s,compare_handshake_buff is %s\n", recv_buff, compare_command_version2);
+			if (strcmp(recv_buff, compare_command_version1) == 0 || strcmp(recv_buff, compare_command_version2) == 0) {
 				printf("true\n");
 				return true;
 			}
-			else {
+			else if (strcmp(recv_buff, compare_handshake_unkown) == 0) {
 				printf("false\n");
+				ERRORHANDLE(hvg_ptr, 1);
 				return false;
 			}
 		}
@@ -148,24 +175,29 @@ bool rs232_imgui_interface(ui::window_t*, mod::hvg::control::hvg_serial_t* hvg_p
 					if (data->EventKey == ImGuiKey_UpArrow)
 					{
 						data->DeleteChars(0, data->BufTextLen);
-						/*    if (strlen(command_array[++i]) == 0) {
-								data->InsertChars(0, command_array[--i]);
-							}
-							else {*/
-							//  j = i;
-						data->InsertChars(0, command_history_buff[i++]);
-						// }
+						if (i == 0 && strlen(command_history_buff[0]) == 0) {
+							data->InsertChars(0, command_history_buff[0]);
+						}
+						else if (i >= 0 && i < 100 && strlen(command_history_buff[i + 1]) == 0) {
+							data->InsertChars(0, command_history_buff[i]);
+						}
+						else if (i >= 0 && i < 100 && strlen(command_history_buff[i + 1]) != 0) {
+							data->InsertChars(0, command_history_buff[++i]);
+						}
+						else if (i == 99) {
+							data->InsertChars(0, command_history_buff[99]);
+						}
 						data->SelectAll();
 					}
 					else if (data->EventKey == ImGuiKey_DownArrow)
 					{
 						data->DeleteChars(0, data->BufTextLen);
-						//   if (strlen(command_array[--i]) == 0) {
-						//       data->InsertChars(0, command_array[i]);
-						 //  }
-						 //  else if (strlen(command_array[--i]) != 0 && i >= 0) {
-						data->InsertChars(0, command_history_buff[i--]);
-						//  }
+						if (i == 0) {
+							data->InsertChars(0, command_history_buff[0]);
+						}
+						else if (i >= 1) {
+							data->InsertChars(0, command_history_buff[--i]);
+						}
 						data->SelectAll();
 					}
 					/*		else if (data->EventKey == ImGuiKey_LeftArrow) {
