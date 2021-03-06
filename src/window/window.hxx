@@ -64,7 +64,6 @@ namespace ui {
 			return false;
 		}
 		new(&win->renders)list<window_t::render_fun>;//construction list
-		//win->renders.push_back(function_ptr);
 		win->renders.push_back(function_ptr);
 		/*	function_ptr = nullptr;*/
 		win->w = w;

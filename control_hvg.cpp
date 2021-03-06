@@ -117,6 +117,8 @@ bool rs232_imgui_interface(ui::window_t*, mod::hvg::control::hvg_serial_t* hvg_p
 	static char command_history_buff[100][100];
 	static char current_command_buff[100];
 	static int receive_flag;
+	const char* items[] = { "<IFV\r\n", "<S_SDRSSL 60000\r\n", "<ES3 0 100 0.5 10 0 L 6\r\n", "<SXP 1 0 1\r\n", "<SXP 0 0 0\r\n", "<GST\r\n", "<ERQ\r\n" };
+	static int item_current = -1;
 	/*static char port_buff[20] = "2";
 	 static char bdrate_buff[20] = "9600";*/
 	 //static char kv_buff[20];
@@ -228,6 +230,11 @@ bool rs232_imgui_interface(ui::window_t*, mod::hvg::control::hvg_serial_t* hvg_p
 		//ImGui::TextColored(ImVec4(1.0f, 0.2f, 0.5f, 0.7f), "Please input command");//custom color
 		ImGui::Text("Please input command");
 		ImGui::InputText("Command", current_command_buff, IM_ARRAYSIZE(current_command_buff), ImGuiInputTextFlags_CallbackHistory, Funcs::MyCallback);
+		ImGui::Combo("current command", &item_current, items, IM_ARRAYSIZE(items));
+		//printf("current command is%s\n", items[item_current]);
+		if (item_current != -1) {
+			strcpy(current_command_buff, items[item_current]);
+		}
 		if (ImGui::Button("Send Command")) {
 			std::thread send(mod::hvg::control::send, hvg_ptr, current_command_buff, strlen(current_command_buff));
 			//std::thread send(mod::hvg::control::send, hvg_ptr, current_command_buff, 100);
